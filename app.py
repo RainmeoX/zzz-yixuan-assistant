@@ -1,6 +1,6 @@
 """
 绝区零仪玄角色助手 - Gradio 网页界面
-用法：python app.py --base_model_path ./models/Qwen3-0.6B --lora_path ./output/Qwen3_Yixuan_LoRA_final
+用法：python app.py --base_model_path ./models/Qwen3-4B --lora_path ./output/Qwen3_Yixuan_LoRA_final
 """
 import argparse
 import os
@@ -304,7 +304,7 @@ def main():
         gr.Markdown("""
         # 🎮 绝区零 - 仪玄角色助手
         
-        基于 Qwen3-0.6B + LoRA 微调 + ChromaDB 外挂数据库 + 回答校验器
+        基于 Qwen3-4B + LoRA 微调 + ChromaDB 外挂数据库 + 回答校验器
         
         **能力**：角色扮演、设定问答、台词风格模仿、RAG 检索增强
         """)
