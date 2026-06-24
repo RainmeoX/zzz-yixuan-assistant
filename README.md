@@ -1,6 +1,6 @@
 # ZZZ Yixuan Assistant
 
-> 🎮 基于 Qwen3-4B + LoRA 微调的绝区零"仪玄"角色助手 —— 支持角色扮演、设定问答、外挂数据库 RAG 检索、回答校验防 OOC
+> 🎮 基于 Qwen3-0.6B + LoRA 微调的绝区零"仪玄"角色助手 —— 支持角色扮演、设定问答、外挂数据库 RAG 检索、回答校验防 OOC
 
 ## ✨ 功能特性
 
@@ -23,7 +23,7 @@
 
 | 项目 | 内容 |
 |:---|:---|
-| **基础模型** | Qwen3-4B |
+| **基础模型** | Qwen3-0.6B |
 | **微调方法** | LoRA (r=16, alpha=32) |
 | **训练数据** | 仪玄角色 468 条 Q&A + 44 条知识库 |
 | **外挂数据库** | ChromaDB（角色卡 + 世界观） |
@@ -48,9 +48,9 @@ git clone https://github.com/RainmeoX/zzz-yixuan-dataset.git
 # 3. 安装依赖（含 ROCm 专用 PyTorch）
 pip install -r requirements.txt
 
-# 4. 下载基础模型（Qwen3-4B）
-python -c "from modelscope import snapshot_download; snapshot_download('Qwen/Qwen3-4B', cache_dir='./models')"
-mv ./models/Qwen/Qwen3-4B ./models/Qwen3-4B 2>/dev/null || true
+# 4. 下载基础模型（Qwen3-0.6B）
+python -c "from modelscope import snapshot_download; snapshot_download('Qwen/Qwen3-0.6B', cache_dir='./models')"
+mv ./models/Qwen/Qwen3-0.6B ./models/Qwen3-0.6B 2>/dev/null || true
 
 # 5. 一键部署
 ./yixuan-deploy
@@ -120,7 +120,7 @@ zzz-yixuan-assistant/
 ### 方式 2：Gradio 网页界面
 
 ```bash
-python app.py --base_model_path ./models/Qwen3-4B --lora_path ./output/Qwen3_Yixuan_LoRA_final
+python app.py --base_model_path ./models/Qwen3-0.6B --lora_path ./output/Qwen3_Yixuan_LoRA_final
 ```
 
 访问 `http://localhost:7860`
@@ -152,7 +152,7 @@ export PORT=9000
 ### 修改模型路径
 
 ```bash
-export MODEL_PATH=./models/Qwen3-4B
+export MODEL_PATH=./models/Qwen3-0.6B
 export LORA_PATH=./output/Qwen3_Yixuan_LoRA_final
 ./yixuan-deploy
 ```
@@ -221,6 +221,6 @@ MIT License
 ## 🙏 致谢
 
 - **数据来源**：[BWIKI 绝区零](https://wiki.biligame.com/zzz/) / [米哈游百科](https://baike.mihoyo.com/zzz/wiki/) / [Gamekee](https://www.gamekee.com/zzz/)
-- **基础模型**：[Qwen3-4B](https://modelscope.cn/models/Qwen/Qwen3-4B) - 阿里通义千问
+- **基础模型**：[Qwen3-0.6B](https://modelscope.cn/models/Qwen/Qwen3-0.6B) - 阿里通义千问
 - **数据集仓库**：[zzz-yixuan-dataset](https://github.com/RainmeoX/zzz-yixuan-dataset)
 - **参考项目**：[arknights-qwen-assistant](https://github.com/RainmeoX/arknights-qwen-assistant)
