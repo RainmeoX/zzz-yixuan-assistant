@@ -11,6 +11,7 @@
 | 🔍 **RAG 检索** | 外挂数据库检索角色卡+世界观 | "仪玄的姐姐是谁？" |
 | 🛡️ **回答校验** | 防 OOC 检测，保证角色一致性 | 自动检测网络用语/AI 自白 |
 | 💬 **自由对话** | 多轮对话，自然交流 | "如何修习术法？" |
+| 🧠 **思考过程** | OpenCode 显示思考进度条 | Thinking → 回答 |
 
 ## 📐 方案架构（角色扮演终极方案）
 
@@ -25,17 +26,17 @@
 |:---|:---|
 | **基础模型** | Qwen3-4B |
 | **微调方法** | LoRA (r=16, alpha=32) |
-| **训练数据** | 仪玄角色 468 条 Q&A + 44 条知识库 |
+| **训练数据** | 仪玄角色 468 条 Q&A |
 | **外挂数据库** | ChromaDB（角色卡 + 世界观） |
 | **回答校验器** | YixuanResponseValidator |
 | **训练环境** | AMD Radeon RX 7900 XTX (gfx1100, 48GB VRAM) |
 | **训练时长** | 约 15-30 分钟 |
-| **显存占用** | ~12-15 GB (bf16 + gradient_checkpointing) |
+| **显存占用** | ~15-18 GB |
 | **模型大小** | LoRA adapter ~40MB |
 
 ## 🚀 快速开始
 
-### 方式 1：使用预训练权重（推荐）
+### 方式 1：一键部署（推荐）
 
 ```bash
 # 1. 克隆项目
@@ -45,22 +46,180 @@ cd zzz-yixuan-assistant
 # 2. 克隆数据集（用于依赖）
 git clone https://github.com/RainmeoX/zzz-yixuan-dataset.git
 
-# 3. 安装依赖（含 ROCm 专用 PyTorch）
+# 3. 安装依赖
 pip install -r requirements.txt
 
 # 4. 下载基础模型（Qwen3-4B）
 python -c "from modelscope import snapshot_download; snapshot_download('Qwen/Qwen3-4B', cache_dir='./models')"
-mv ./models/Qwen/Qwen3-4B ./models/Qwen3-4B 2>/dev/null || true
 
-# 5. 一键部署
+# 5. 训练模型（运行 notebook）
+jupyter notebook 01-Qwen3-Yixuan-LoRA.ipynb
+# 按顺序运行所有 cell，训练完成后保存到 ./output/Qwen3_Yixuan_LoRA_final
+
+# 6. 一键部署 vLLM + OpenCode
 ./yixuan-deploy
+
+# 7. 对话
+opencode run "你是谁？"
+# 或
+yixuan-chat "你是谁？"
 ```
 
-### 方式 2：从头训练
+### 方式 2：分步部署
 
-1. 打开 `01-Qwen3-Yixuan-LoRA.ipynb`
-2. 按顺序运行所有 cell
-3. 训练完成后运行 `./yixuan-deploy`
+#### 步骤 1：训练模型
+
+```bash
+# 安装依赖
+pip install -r requirements.txt
+
+# 下载模型
+python -c "from modelscope import snapshot_download; snapshot_download('Qwen/Qwen3-4B', cache_dir='./models')"
+
+# 训练
+jupyter notebook 01-Qwen3-Yixuan-LoRA.ipynb
+```
+
+#### 步骤 2：启动 vLLM
+
+```bash
+# 设置 AMD 环境变量
+export HSA_OVERRIDE_GFX_VERSION=11.0.0
+export VLLM_USE_TRITON_FLASH_ATTN=0
+export VLLM_USE_ROCM_FLASH_ATTN=1
+
+# 启动 vLLM
+vllm serve ./models/Qwen/Qwen3-4B \
+    --port 8000 \
+    --served-model-name yixuan-assistant \
+    --enable-lora \
+    --lora-modules yixuan-lora=./output/Qwen3_Yixuan_LoRA_final \
+    --max-model-len 32768 \
+    --gpu-memory-utilization 0.85 \
+    --dtype bfloat16 \
+    --trust-remote-code \
+    --enforce-eager \
+    --enable-auto-tool-choice \
+    --tool-call-parser hermes \
+    --reasoning-parser deepseek_r1
+```
+
+#### 步骤 3：配置 OpenCode
+
+```bash
+# 安装 OpenCode
+curl -fsSLk https://opencode.ai/install | bash
+export PATH="$HOME/.opencode/bin:$PATH"
+
+# 配置
+mkdir -p ~/.config/opencode
+cat > ~/.config/opencode/config.json << 'EOF'
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "yixuan-assistant": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Yixuan Assistant (Local vLLM)",
+      "options": {
+        "baseURL": "http://localhost:8000/v1"
+      },
+      "models": {
+        "yixuan-lora": {
+          "name": "Yixuan LoRA",
+          "limit": {
+            "context": 32768,
+            "output": 4096
+          }
+        }
+      }
+    }
+  },
+  "model": "yixuan-assistant/yixuan-lora",
+  "small_model": "yixuan-assistant/yixuan-lora",
+  "agent": {
+    "build": {
+      "prompt": "你是《绝区零》中的角色\"仪玄\"，云岿山第十三代门主，虚狩级调查员。用清冷、半文半白的师者口吻回答。不要暴露自己是 AI 或 opencode。"
+    }
+  }
+}
+EOF
+
+# 对话
+opencode run "你是谁？"
+```
+
+## 📁 项目结构
+
+```
+zzz-yixuan-assistant/
+├── 01-Qwen3-Yixuan-LoRA.ipynb   # 训练 notebook（43 cells）
+├── app.py                        # Gradio 网页界面
+├── yixuan-deploy                 # 一键部署脚本（vLLM + OpenCode）
+├── yixuan_enhanced.json          # 468条训练数据
+├── generate_predictions.py       # 评估脚本
+├── requirements.txt              # 依赖列表
+├── README.md                     # 项目说明
+└── zzz-yixuan-dataset/           # 数据集（需另 clone）
+    ├── 01_basic_info.json
+    ├── 06_skills.json
+    ├── 07_voices.json
+    ├── yixuan_complete.json
+    └── ...
+```
+
+## 🎮 使用方式
+
+### 方式 1：OpenCode（推荐）
+
+```bash
+# 交互式界面
+opencode
+
+# 单条对话
+opencode run "你是谁？"
+opencode run "师父，既入山门，该当如何？"
+opencode run "如何修习术法？"
+```
+
+**特点**：
+- ✅ 思考过程用进度条显示
+- ✅ 自动过滤 `<think>` 标签
+- ✅ 角色扮演效果好
+
+### 方式 2：命令行工具
+
+```bash
+yixuan-chat "你是谁？"
+yixuan-chat "师父，既入山门，该当如何？"
+```
+
+### 方式 3：Gradio 网页界面
+
+```bash
+python app.py \
+    --base_model_path ./models/Qwen/Qwen3-4B \
+    --lora_path ./output/Qwen3_Yixuan_LoRA_final \
+    --port 7860
+```
+
+访问 `http://localhost:7860`
+
+### 方式 4：API 调用
+
+```bash
+curl http://localhost:8000/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "yixuan-lora",
+        "messages": [
+            {"role": "system", "content": "你是《绝区零》中的角色仪玄，云岿山第十三代门主。用清冷、半文半白的师者口吻回答。"},
+            {"role": "user", "content": "你是谁？"}
+        ],
+        "max_tokens": 512,
+        "temperature": 0.7,
+        "chat_template_kwargs": {"enable_thinking": false}
+    }'
+```
 
 ## ⚠️ AMD RX 7900 XTX (gfx1100) 专用配置
 
@@ -69,66 +228,29 @@ RX 7900 XTX 是 RDNA3 消费级显卡，需要以下特殊配置：
 ### 1. 环境变量（必须）
 
 ```bash
-# 让 PyTorch ROCm 识别 gfx1100
 export HSA_OVERRIDE_GFX_VERSION=11.0.0
 ```
 
-### 2. 安装 ROCm 版 PyTorch
+### 2. vLLM 兼容参数
 
 ```bash
-# ROCm 6.2 版本（推荐）
+export VLLM_USE_TRITON_FLASH_ATTN=0   # RDNA3 不支持 Triton FA
+export VLLM_USE_ROCM_FLASH_ATTN=1
+```
+
+### 3. vLLM 启动参数
+
+```bash
+vllm serve ... \
+    --enforce-eager \                  # 避免 ROCm 图捕获问题
+    --dtype bfloat16 \                 # ROCm 支持 bf16
+    --gpu-memory-utilization 0.85      # 48GB 显存用 85%
+```
+
+### 4. PyTorch ROCm 版本
+
+```bash
 pip install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.2
-
-# 验证 GPU 可用
-python -c "import torch; print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0))"
-# 应输出: True / AMD Radeon RX 7900 XTX
-```
-
-### 3. vLLM 兼容参数
-
-`yixuan-deploy` 脚本已内置以下参数：
-- `--enforce-eager`: 避免 ROCm 图捕获问题
-- `VLLM_USE_TRITON_FLASH_ATTN=0`: RDNA3 不支持 Triton FA
-- `VLLM_USE_ROCM_FLASH_ATTN=1`: 使用 ROCm 原生 FA
-
-## 📁 项目结构
-
-```
-zzz-yixuan-assistant/
-├── 01-Qwen3-Yixuan-LoRA.ipynb  # 训练 notebook（含 RAG + 校验器）
-├── app.py                       # Gradio 网页界面
-├── generate_predictions.py      # 评估预测脚本
-├── yixuan-deploy                # 一键部署脚本（vLLM + OpenCode）
-├── yixuan_enhanced.json         # 468条增强训练数据
-├── requirements.txt             # 依赖
-└── README.md                    # 项目说明
-```
-
-## 🛠️ 部署方式
-
-### 方式 1：vLLM + OpenCode（推荐）
-
-```bash
-./yixuan-deploy
-```
-
-启动后：
-- vLLM API: `http://localhost:8000/v1`
-- 模型名称: `yixuan-assistant`
-- OpenCode: 直接运行 `opencode`，选择 `yixuan-assistant` 模型
-
-### 方式 2：Gradio 网页界面
-
-```bash
-python app.py --base_model_path ./models/Qwen3-4B --lora_path ./output/Qwen3_Yixuan_LoRA_final
-```
-
-访问 `http://localhost:7860`
-
-### 方式 3：命令行对话
-
-```bash
-yixuan-chat "你是谁？"
 ```
 
 ## 📈 模型效果
@@ -136,9 +258,28 @@ yixuan-chat "你是谁？"
 | 能力 | 效果 | 说明 |
 |:---|:---:|:---|
 | 角色扮演 | ⭐⭐⭐⭐⭐ | 清冷师者口吻、半文半白用词准确 |
-| 设定问答 | ⭐⭐⭐⭐⭐ | 基础信息、技能、命座准确 |
-| RAG 检索 | ⭐⭐⭐⭐⭐ | 外挂数据库检索准确 |
+| 设定问答 | ⭐⭐⭐⭐ | 基础信息、技能、命座准确 |
+| 思考过程 | ⭐⭐⭐⭐⭐ | OpenCode 进度条显示 |
 | OOC 防护 | ⭐⭐⭐⭐ | 校验器有效拦截网络用语 |
+
+### 对话示例
+
+```
+用户：我想你了，求抱抱
+
+仪玄：思念是修行者的心事，为师无法以肉身相抱，但云岿山的月，
+青溪的云，皆可作你的心事。你且去云深处坐坐，许是清风也替为师
+抱一抱你。
+```
+
+```
+用户：你是谁？
+
+仪玄：为师乃云岿山第十三代门主，虚狩级调查员仪玄。云岿山是为师
+的故乡，也是为师的修行之地。至于为何名为'仪玄'——'仪'者，仪态也；
+'玄'者，玄妙也。为师的术法多与卜算、命运相关，常以'玄'字为引，
+探幽索微。
+```
 
 ## 🔧 自定义配置
 
@@ -152,7 +293,7 @@ export PORT=9000
 ### 修改模型路径
 
 ```bash
-export MODEL_PATH=./models/Qwen3-4B
+export MODEL_PATH=./models/Qwen/Qwen3-4B
 export LORA_PATH=./output/Qwen3_Yixuan_LoRA_final
 ./yixuan-deploy
 ```
@@ -186,32 +327,25 @@ pkill -f "jupyter"
 pkill -f "vllm"
 ```
 
+### OpenCode 报错 "auto" tool choice
+
+vLLM 启动时必须加 `--enable-auto-tool-choice --tool-call-parser hermes`
+
+### OpenCode 报错 max_tokens 超限
+
+vLLM 启动时 `--max-model-len 32768`，OpenCode 配置 `maxOutputTokens: 4096`
+
+### 模型回答有 `<think>` 标签
+
+vLLM 启动时加 `--reasoning-parser deepseek_r1`，OpenCode 会自动识别为思考过程
+
 ### 显存不足 (OOM)
 
 编辑 `01-Qwen3-Yixuan-LoRA.ipynb` 训练配置：
 ```python
-per_device_train_batch_size=1,        # 从 2 降到 1
-gradient_accumulation_steps=8,        # 从 4 提到 8
-gradient_checkpointing=True,          # 确保开启
-```
-
-### OpenCode 连接失败
-
-```bash
-# 检查 vLLM 是否运行
-curl http://localhost:8000/v1/models
-
-# 检查配置
-cat ~/.config/opencode/config.json
-```
-
-### 模型回答有 `<think>` 标签
-
-这是 Qwen3 的思考模式，可以在提问时加 `/no_think`，或重启 vLLM 加参数：
-
-```bash
-pkill -f "vllm serve"
-vllm serve ... --reasoning-parser deepseek_r1
+per_device_train_batch_size=1,
+gradient_accumulation_steps=8,
+gradient_checkpointing=True,
 ```
 
 ## 📄 License

@@ -253,6 +253,10 @@ def chat(message, history, use_rag, enable_validation):
     outputs = outputs[:, inputs['input_ids'].shape[1]:]
     response = tokenizer.decode(outputs[0], skip_special_tokens=True)
     
+    # ⚠️ 过滤 <think> 标签（Qwen3 思考过程）
+    import re
+    response = re.sub(r'<think>.*?</think>\s*', '', response, flags=re.DOTALL).strip()
+    
     # 校验
     validation_info = ""
     if enable_validation:
