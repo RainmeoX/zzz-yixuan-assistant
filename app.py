@@ -267,17 +267,17 @@ def chat(message, history, use_rag, enable_validation):
 
 
 # ============================================================
-# 预设示例
+# 预设示例（Gradio 6.0 要求 additional_inputs 时 examples 必须是 list of lists）
 # ============================================================
 EXAMPLES = [
-    "你是谁？",
-    "介绍一下云岿山。",
-    "师父，既入山门，该当如何？",
-    "如何修习术法？",
-    "仪玄的姐姐是谁？",
-    "你的生日是什么时候？",
-    "什么是动静之道？",
-    "扮演仪玄，说一句关于命运的台词",
+    ["你是谁？", True, True],
+    ["介绍一下云岿山。", True, True],
+    ["师父，既入山门，该当如何？", False, True],
+    ["如何修习术法？", False, True],
+    ["仪玄的姐姐是谁？", True, True],
+    ["你的生日是什么时候？", False, True],
+    ["什么是动静之道？", False, True],
+    ["扮演仪玄，说一句关于命运的台词", False, True],
 ]
 
 
@@ -299,8 +299,8 @@ def main():
     # 加载知识库
     load_knowledge_db(args.db_dir, args.knowledge_path)
     
-    # 创建界面
-    with gr.Blocks(title="绝区零仪玄角色助手", theme=gr.themes.Soft()) as demo:
+    # 创建界面（Gradio 6.0: theme 移到 launch()）
+    with gr.Blocks(title="绝区零仪玄角色助手") as demo:
         gr.Markdown("""
         # 🎮 绝区零 - 仪玄角色助手
         
@@ -321,7 +321,7 @@ def main():
             description="问任何关于仪玄的问题，或与角色进行对话",
         )
     
-    demo.launch(server_port=args.port, share=True)
+    demo.launch(server_port=args.port, share=True, theme=gr.themes.Soft())
 
 
 if __name__ == "__main__":
