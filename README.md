@@ -56,13 +56,13 @@ python -c "from modelscope import snapshot_download; snapshot_download('Qwen/Qwe
 jupyter notebook 01-Qwen3-Yixuan-LoRA.ipynb
 # 按顺序运行所有 cell，训练完成后保存到 ./output/Qwen3_Yixuan_LoRA_final
 
-# 6. 一键部署 vLLM + OpenCode
-./yixuan-deploy
+# 6. 一键部署（启动 vLLM + 配置 OpenCode）
+./scripts/deploy-all.sh
 
 # 7. 对话
 opencode run "你是谁？"
 # 或
-yixuan-chat "你是谁？"
+./scripts/chat.sh "你是谁？"
 ```
 
 ### 方式 2：分步部署
@@ -154,11 +154,20 @@ opencode run "你是谁？"
 zzz-yixuan-assistant/
 ├── 01-Qwen3-Yixuan-LoRA.ipynb   # 训练 notebook（43 cells）
 ├── app.py                        # Gradio 网页界面
-├── yixuan-deploy                 # 一键部署脚本（vLLM + OpenCode）
 ├── yixuan_enhanced.json          # 468条训练数据
 ├── generate_predictions.py       # 评估脚本
 ├── requirements.txt              # 依赖列表
+├── opencode_config.json          # OpenCode 配置模板
 ├── README.md                     # 项目说明
+├── scripts/                      # 脚本目录
+│   ├── deploy-all.sh             # 一键部署（启动 vLLM + 配置 OpenCode）
+│   ├── start-vllm.sh             # 启动 vLLM 推理服务
+│   ├── start-webui.sh            # 启动 Gradio 网页界面
+│   ├── setup-opencode.sh         # 配置 OpenCode
+│   ├── chat.sh                   # 命令行对话
+│   ├── status.sh                 # 查看服务状态
+│   ├── stop-all.sh               # 停止所有服务
+│   └── README.md                 # 脚本说明
 └── zzz-yixuan-dataset/           # 数据集（需另 clone）
     ├── 01_basic_info.json
     ├── 06_skills.json
