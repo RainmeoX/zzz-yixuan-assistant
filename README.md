@@ -1,6 +1,23 @@
 # ZZZ Yixuan Assistant
 
-> 🎮 基于 Qwen3-4B + LoRA 微调的绝区零"仪玄"角色助手 —— 支持角色扮演、设定问答、外挂数据库 RAG 检索、回答校验防 OOC
+> 🎮 基于 Qwen3-4B + LoRA 微调的绝区零"仪玄"角色助手 —— 后端服务
+
+## 📐 架构说明（前后端分离）
+
+```
+前端 (zzz-yixuan-webui)           后端 (本仓库)
+┌─────────────────┐              ┌─────────────────────┐
+│  纯 HTML/CSS/JS  │ ──API请求──→ │  vLLM 推理服务       │
+│  ZZZ 风格 UI     │ ←─响应────  │  (端口 8000)         │
+│  静态文件        │              │  Qwen3-4B + LoRA     │
+└─────────────────┘              └─────────────────────┘
+```
+
+| 仓库 | 职责 | 地址 |
+|---|---|---|
+| **后端（本仓库）** | 模型训练 + vLLM 推理服务 | [zzz-yixuan-assistant](https://github.com/RainmeoX/zzz-yixuan-assistant) |
+| **前端** | ZZZ官网风格 UI | [zzz-yixuan-webui](https://github.com/RainmeoX/zzz-yixuan-webui) |
+| **数据集** | 角色资料 | [zzz-yixuan-dataset](https://github.com/RainmeoX/zzz-yixuan-dataset) |
 
 ## ✨ 功能特性
 
