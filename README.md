@@ -53,7 +53,26 @@
 
 ## 🚀 快速开始
 
-### 方式 1：一键部署（推荐）
+### ⭐ 一键部署（推荐）
+
+**前提**：已完成训练，有 `./output/Qwen3_Yixuan_LoRA_final/` 目录
+
+```bash
+# 一键部署（启动 vLLM + 配置 OpenCode）
+./scripts/deploy-all.sh
+
+# 部署完成后直接对话
+opencode run "你是谁？"
+```
+
+`deploy-all.sh` 会自动完成：
+1. ✅ 启动 vLLM 推理服务（端口 8000）
+2. ✅ 安装并配置 OpenCode（连接 vLLM）
+3. ✅ 创建命令行工具
+
+---
+
+### 📋 完整流程（首次使用）
 
 ```bash
 # 1. 克隆项目
