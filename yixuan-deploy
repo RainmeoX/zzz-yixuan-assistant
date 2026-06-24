@@ -97,7 +97,7 @@ nohup vllm serve "$MODEL_PATH" \
     --served-model-name $MODEL_NAME \
     --enable-lora \
     --lora-modules yixuan-lora=$LORA_PATH \
-    --max-model-len 4096 \
+    --max-model-len 32768 \
     --gpu-memory-utilization 0.85 \
     --dtype bfloat16 \
     --trust-remote-code \
