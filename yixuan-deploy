@@ -21,11 +21,14 @@ print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 # ============================================
 # 配置（可修改）
 # ============================================
-MODEL_PATH="${MODEL_PATH:-./models/Qwen/Qwen3-0___6B}"
+MODEL_PATH="${MODEL_PATH:-./models/Qwen/Qwen3-4B}"
 LORA_PATH="${LORA_PATH:-./output/Qwen3_Yixuan_LoRA_final}"
 PORT="${PORT:-8000}"
 MODEL_NAME="yixuan-assistant"
 VLLM_LOG="vllm.log"
+
+# ⚠️ AMD RX 7900 XTX (gfx1100) 必须设置此环境变量
+export HSA_OVERRIDE_GFX_VERSION=11.0.0
 
 # ============================================
 # 步骤 1: 检查环境
@@ -42,7 +45,7 @@ fi
 if [ ! -d "$MODEL_PATH" ]; then
     print_error "模型路径不存在: $MODEL_PATH"
     print_info "请先运行 Notebook 训练模型，或设置 MODEL_PATH 环境变量"
-    print_info "例如: MODEL_PATH=./models/Qwen3-0.6B ./yixuan-deploy"
+    print_info "例如: MODEL_PATH=./models/Qwen3-4B ./yixuan-deploy"
     exit 1
 fi
 
@@ -83,15 +86,23 @@ print_info "  端口: $PORT"
 print_info "  模型名称: $MODEL_NAME"
 
 # 启动 vLLM（后台运行）
+# ⚠️ AMD gfx1100 (RX 7900 XTX) 兼容参数:
+#   - HSA_OVERRIDE_GFX_VERSION=11.0.0 (已在脚本开头设置)
+#   - --enforce-eager: 避免 ROCm 图捕获问题
+#   - VLLM_USE_TRITON_FLASH_ATTN=0: RDNA3 不支持 Triton FA
+export VLLM_USE_TRITON_FLASH_ATTN=0
+export VLLM_USE_ROCM_FLASH_ATTN=1
+
 nohup vllm serve "$MODEL_PATH" \
     --port $PORT \
     --model-name $MODEL_NAME \
     --enable-lora \
     --lora-modules yixuan-lora=$LORA_PATH \
-    --max-model-len 2048 \
-    --gpu-memory-utilization 0.9 \
+    --max-model-len 4096 \
+    --gpu-memory-utilization 0.85 \
     --dtype bfloat16 \
     --trust-remote-code \
+    --enforce-eager \
     --reasoning-parser deepseek_r1 \
     > $VLLM_LOG 2>&1 &
 
