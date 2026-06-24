@@ -102,7 +102,6 @@ nohup vllm serve "$MODEL_PATH" \
     --dtype bfloat16 \
     --trust-remote-code \
     --enforce-eager \
-    --reasoning-parser deepseek_r1 \
     > $VLLM_LOG 2>&1 &
 
 VLLM_PID=$!
