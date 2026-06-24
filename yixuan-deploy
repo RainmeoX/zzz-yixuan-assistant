@@ -94,7 +94,7 @@ export VLLM_USE_ROCM_FLASH_ATTN=1
 
 nohup vllm serve "$MODEL_PATH" \
     --port $PORT \
-    --model-name $MODEL_NAME \
+    --served-model-name $MODEL_NAME \
     --enable-lora \
     --lora-modules yixuan-lora=$LORA_PATH \
     --max-model-len 4096 \
