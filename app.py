@@ -303,29 +303,140 @@ def main():
     # 加载知识库
     load_knowledge_db(args.db_dir, args.knowledge_path)
     
-    # 创建界面（Gradio 6.0: theme 移到 launch()）
-    with gr.Blocks(title="绝区零仪玄角色助手") as demo:
-        gr.Markdown("""
-        # 🎮 绝区零 - 仪玄角色助手
-        
-        基于 Qwen3-4B + LoRA 微调 + ChromaDB 外挂数据库 + 回答校验器
-        
-        **能力**：角色扮演、设定问答、台词风格模仿、RAG 检索增强
+    # 创建界面（酒馆AI风格：深色背景 + 金色强调 + 古风字体）
+    custom_css = """
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+    
+    :root {
+        --brown-black: #0f0a06;
+        --brown-dark: #1a120b;
+        --brown: #2c1a0e;
+        --gold: #d4a017;
+        --gold-light: #f5c542;
+        --cream: #f5e6d3;
+        --card-bg: rgba(44, 26, 14, 0.55);
+        --card-border: rgba(212, 160, 23, 0.25);
+    }
+    
+    .gradio-container {
+        background: linear-gradient(180deg, var(--brown-black) 0%, var(--brown-dark) 100%) !important;
+        max-width: 1200px !important;
+    }
+    
+    .gradio-container * {
+        font-family: 'Noto Sans SC', system-ui, sans-serif !important;
+    }
+    
+    .main-title {
+        font-family: 'Noto Serif SC', serif !important;
+        font-size: 2.8rem !important;
+        font-weight: 900 !important;
+        background: linear-gradient(135deg, var(--gold), var(--gold-light)) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        text-align: center;
+        margin: 20px 0 10px 0 !important;
+        letter-spacing: 4px;
+    }
+    
+    .subtitle {
+        font-family: 'Noto Serif SC', serif !important;
+        color: rgba(245, 230, 211, 0.55) !important;
+        text-align: center;
+        font-size: 1rem !important;
+        margin-bottom: 30px !important;
+        letter-spacing: 2px;
+    }
+    
+    .feature-card {
+        background: var(--card-bg) !important;
+        border: 1px solid var(--card-border) !important;
+        border-radius: 16px !important;
+        padding: 20px !important;
+        backdrop-filter: blur(10px);
+        text-align: center;
+    }
+    
+    .message.user {
+        background: linear-gradient(135deg, rgba(212, 160, 23, 0.15), rgba(245, 197, 66, 0.1)) !important;
+        border: 1px solid rgba(212, 160, 23, 0.3) !important;
+        border-radius: 16px 16px 4px 16px !important;
+        color: var(--cream) !important;
+    }
+    
+    .message.bot {
+        background: rgba(44, 26, 14, 0.7) !important;
+        border: 1px solid var(--card-border) !important;
+        border-radius: 16px 16px 16px 4px !important;
+        color: var(--cream) !important;
+    }
+    
+    textarea, input {
+        background: rgba(15, 10, 6, 0.6) !important;
+        border: 1px solid var(--card-border) !important;
+        color: var(--cream) !important;
+        border-radius: 12px !important;
+    }
+    
+    button.primary {
+        background: linear-gradient(135deg, var(--gold), var(--gold-light)) !important;
+        color: var(--brown-dark) !important;
+        font-weight: 700 !important;
+        border: none !important;
+        border-radius: 24px !important;
+        box-shadow: 0 4px 20px rgba(212, 160, 23, 0.3) !important;
+    }
+    
+    .divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        margin: 30px 0;
+        opacity: 0.3;
+    }
+    """
+    
+    with gr.Blocks(title="仪玄 · 云岿山门主", css=custom_css, theme=gr.themes.Soft()) as demo:
+        # 标题区域
+        gr.HTML("""
+        <div style="text-align: center; padding: 40px 20px 20px;">
+            <h1 class="main-title">仪玄</h1>
+            <p class="subtitle">云岿山第十三代门主 · 虚狩级调查员</p>
+            <div class="divider"></div>
+        </div>
         """)
         
+        # 功能介绍卡片
         with gr.Row():
-            use_rag = gr.Checkbox(value=True, label="启用 RAG 检索（外挂数据库）")
-            enable_validation = gr.Checkbox(value=True, label="启用回答校验（防 OOC）")
+            gr.HTML('<div class="feature-card"><div style="font-size:2rem;">🎭</div><h3 style="color:#f5c542;">角色扮演</h3><p style="color:rgba(245,230,211,0.6);">清冷师者口吻</p></div>')
+            gr.HTML('<div class="feature-card"><div style="font-size:2rem;">📚</div><h3 style="color:#f5c542;">设定问答</h3><p style="color:rgba(245,230,211,0.6);">角色资料查询</p></div>')
+            gr.HTML('<div class="feature-card"><div style="font-size:2rem;">🔍</div><h3 style="color:#f5c542;">RAG 检索</h3><p style="color:rgba(245,230,211,0.6);">外挂数据库</p></div>')
+            gr.HTML('<div class="feature-card"><div style="font-size:2rem;">🛡️</div><h3 style="color:#f5c542;">防 OOC</h3><p style="color:rgba(245,230,211,0.6);">回答校验器</p></div>')
         
+        gr.HTML('<div class="divider"></div>')
+        
+        # 控制选项
+        with gr.Row():
+            use_rag = gr.Checkbox(value=True, label="🔍 启用 RAG 检索（外挂数据库）")
+            enable_validation = gr.Checkbox(value=True, label="🛡️ 启用回答校验（防 OOC）")
+        
+        # 对话区域
         chatbot = gr.ChatInterface(
             fn=chat,
             additional_inputs=[use_rag, enable_validation],
             examples=EXAMPLES,
-            title="与仪玄对话",
-            description="问任何关于仪玄的问题，或与角色进行对话",
+            title=None,
+            description=None,
         )
+        
+        # 底部
+        gr.HTML("""
+        <div style="text-align: center; padding: 20px; color: rgba(245,230,211,0.4); font-size: 0.85rem;">
+            <div class="divider"></div>
+            <p>基于 Qwen3-4B + LoRA 微调 · 既入山门，那些俗务繁礼便留在山下吧。</p>
+        </div>
+        """)
     
-    demo.launch(server_port=args.port, share=True, theme=gr.themes.Soft())
+    demo.launch(server_port=args.port, share=True)
 
 
 if __name__ == "__main__":
