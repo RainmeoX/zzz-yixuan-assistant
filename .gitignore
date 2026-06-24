@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# 模型权重（体积大，不入库）
+models/
+output/
+*.bin
+*.safetensors
+*.gguf
+*.pt
+*.pth
+
+# ChromaDB 持久化数据
+chroma_db/
+
+# vLLM 日志
+vllm.log
+opencode.log
+opencode_tty.log
+
+# 虚拟环境
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.bak
+
+# 数据集仓库（用户需自行 clone）
+zzz-yixuan-dataset
+zzz-yixuan-dataset/

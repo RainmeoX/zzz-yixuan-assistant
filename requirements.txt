@@ -1,0 +1,11 @@
+torch
+transformers
+datasets
+peft
+accelerate
+swanlab
+modelscope
+gradio
+pandas
+chromadb
+sentence-transformers
