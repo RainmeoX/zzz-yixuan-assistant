@@ -195,31 +195,62 @@ zzz-yixuan-assistant/
 
 ## 🎮 使用方式
 
-### 方式 1：OpenCode（推荐）
+本项目支持**多种对话方式**，都需要先启动后端 vLLM 服务：
 
 ```bash
-# 交互式界面
-opencode
+./scripts/start-vllm.sh
+```
 
-# 单条对话
-opencode run "你是谁？"
-opencode run "师父，既入山门，该当如何？"
-opencode run "如何修习术法？"
+### 方式 1：OpenCode（推荐）⭐
+
+OpenCode 是终端 AI 对话工具，连接后端 vLLM 服务，支持思考过程显示。
+
+```bash
+# 1. 配置 OpenCode（自动安装 + 配置，连接后端 vLLM）
+./scripts/setup-opencode.sh
+
+# 2. 对话
+opencode                    # 交互式界面
+opencode run "你是谁？"     # 单条对话
 ```
 
 **特点**：
+- ✅ 连接后端 vLLM 服务（端口 8000）
 - ✅ 思考过程用进度条显示
 - ✅ 自动过滤 `<think>` 标签
 - ✅ 角色扮演效果好
+- ✅ 终端界面，无需浏览器
 
-### 方式 2：命令行工具
+### 方式 2：网页界面（ZZZ 风格）
+
+前端已独立仓库：[zzz-yixuan-webui](https://github.com/RainmeoX/zzz-yixuan-webui)
 
 ```bash
-yixuan-chat "你是谁？"
-yixuan-chat "师父，既入山门，该当如何？"
+# 1. 启动后端 vLLM 服务
+./scripts/start-vllm.sh
+
+# 2. 克隆前端
+git clone https://github.com/RainmeoX/zzz-yixuan-webui.git
+cd zzz-yixuan-webui
+
+# 3. 启动前端（连接后端 vLLM）
+python3 -m http.server 7860
 ```
 
-### 方式 3：Gradio 网页界面
+**特点**：
+- ✅ 连接后端 vLLM 服务（端口 8000）
+- ✅ ZZZ 官网风格华丽 UI
+- ✅ 桌面/手机自适应
+- ✅ 角色立绘展示
+
+### 方式 3：命令行工具
+
+```bash
+./scripts/chat.sh "你是谁？"
+./scripts/chat.sh "师父，既入山门，该当如何？"
+```
+
+### 方式 4：Gradio 网页界面（备用）
 
 ```bash
 python app.py \
@@ -230,7 +261,7 @@ python app.py \
 
 访问 `http://localhost:7860`
 
-### 方式 4：API 调用
+### 方式 5：API 调用
 
 ```bash
 curl http://localhost:8000/v1/chat/completions \
