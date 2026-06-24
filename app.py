@@ -395,7 +395,7 @@ def main():
     }
     """
     
-    with gr.Blocks(title="仪玄 · 云岿山门主", css=custom_css, theme=gr.themes.Soft()) as demo:
+    with gr.Blocks(title="仪玄 · 云岿山门主") as demo:
         # 标题区域
         gr.HTML("""
         <div style="text-align: center; padding: 40px 20px 20px;">
@@ -436,7 +436,7 @@ def main():
         </div>
         """)
     
-    demo.launch(server_port=args.port, share=True)
+    demo.launch(server_port=args.port, share=True, theme=gr.themes.Soft(), css=custom_css)
 
 
 if __name__ == "__main__":
