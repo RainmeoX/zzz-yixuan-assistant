@@ -1,8 +1,6 @@
 # ZZZ Yixuan Assistant
 
 > 🎮 基于 Qwen3-4B + LoRA 微调的绝区零"仪玄"角色助手 —— 后端服务
->
-> ℹ️ 本仓库是**可复用的通用链路**：微调学风格 + 检索保知识 + 校验器控一致性。语料与设定文件整体替换后即可迁移到任意领域，绝区零「仪玄」只是当前的演示实例。
 
 ## 📐 架构说明（前后端分离）
 
@@ -160,6 +158,15 @@ cat > ~/.config/opencode/config.json << 'EOF'
       "name": "Yixuan Assistant (Local vLLM)",
       "options": {
         "baseURL": "http://localhost:8000/v1"
+      },
+      "models": {
+        "yixuan-lora": {
+          "name": "Yixuan LoRA",
+          "limit": {
+            "context": 32768,
+            "output": 4096
+          }
+        }
       }
     }
   },
